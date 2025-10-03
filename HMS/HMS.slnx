@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="API/src/API/API.csproj" />
+  <Project Path="AuthService/src/AuthService.API/AuthService.API.csproj" />
+  <Project Path="MedicalHistoryService/src/MedicalHistoryService.API/MedicalHistoryService.API.csproj" />
+  <Project Path="PatientsService/src/PatientsService.API/PatientsService.API.csproj" />
+  <Project Path="Shared/Shared.csproj" />
+</Solution>

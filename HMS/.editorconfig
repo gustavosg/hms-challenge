@@ -1,0 +1,41 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+# All files
+[*]
+indent_style = space
+charset = utf-8-bom
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# C# files
+[*.cs]
+indent_size = 4
+charset = utf-8-bom
+
+# JSON files
+[*.json]
+indent_size = 2
+charset = utf-8-bom
+
+# XML and project files
+[*.{xml,csproj,targets,props}]
+indent_size = 2
+charset = utf-8-bom
+
+# Markdown files
+[*.md]
+trim_trailing_whitespace = false
+charset = utf-8-bom
+
+# YAML files
+[*.{yml,yaml}]
+indent_size = 2
+charset = utf-8-bom
+
+# Dockerfile
+[Dockerfile*]
+charset = utf-8-bom

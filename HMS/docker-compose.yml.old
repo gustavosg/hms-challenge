@@ -1,0 +1,163 @@
+services:
+  # Message Broker
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    ports:
+      - "5672:5672"     # AMQP port
+      - "15672:15672"   # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - microservices_network
+
+  # Database for AuthService
+  postgres-auth:
+    image: postgres:16
+    container_name: postgres_auth
+    environment:
+      POSTGRES_DB: auth_service_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_auth_data:/var/lib/postgresql/data
+    networks:
+      - microservices_network
+
+  # Database for Patients
+  postgres-patients:
+    image: postgres:16
+    container_name: postgres_patients
+    environment:
+      POSTGRES_DB: patients_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5433:5432"
+    volumes:
+      - pg_patients_data:/var/lib/postgresql/data
+    networks:
+      - microservices_network
+
+  # Database for Medical History
+  postgres-medical-history:
+    image: postgres:16
+    container_name: postgres_medical_history
+    environment:
+      POSTGRES_DB: medical_history_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5434:5432"
+    volumes:
+      - pg_medical_data:/var/lib/postgresql/data
+    networks:
+      - microservices_network
+
+  # API Gateway
+  api:
+    build:
+      context: .
+      dockerfile: API/src/API/Dockerfile
+    container_name: api_gateway
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - MessageBroker__RabbitMQ=amqp://admin:admin123@rabbitmq:5672
+      - Services__AuthUserService__BaseUrl=http://auth_service:8080
+      - Services__PatientService__BaseUrl=http://patients_service:8080
+      - Services__MedicalHistoryService__BaseUrl=http://medical_history_service:8080
+    depends_on:
+      - rabbitmq
+      - auth_service
+      - patients_service
+      - medical_history_service
+    networks:
+      - microservices_network
+
+  # Auth Service
+  auth_service:
+    build:
+      context: .
+      dockerfile: AuthService/src/AuthService.API/Dockerfile
+    container_name: auth_service
+    ports:
+      - "5002:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres-auth;Database=auth_service_db;Username=admin;Password=admin123;Port=5432
+      - MessageBroker__RabbitMQ=amqp://admin:admin123@rabbitmq:5672
+    depends_on:
+      - rabbitmq
+      - postgres-auth
+    networks:
+      - microservices_network
+
+  patients_service:
+    build:
+      context: .
+      dockerfile: PatientsService/src/PatientsService.API/Dockerfile
+    container_name: patients_service
+    ports:
+      - "5102:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres-patients;Database=patients_db;Username=admin;Password=admin123;Port=5432
+      - MessageBroker__RabbitMQ=amqp://admin:admin123@rabbitmq:5672
+    depends_on:
+      - rabbitmq
+      - postgres-patients
+    networks:
+      - microservices_network
+
+  medical_history_service:
+    build:
+      context: .
+      dockerfile: MedicalHistoryService/src/MedicalHistoryService.API/Dockerfile
+    container_name: medical_history_service
+    ports:
+      - "5202:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres-medical-history;Database=medical_history_db;Username=admin;Password=admin123;Port=5432
+      - MessageBroker__RabbitMQ=amqp://admin:admin123@rabbitmq:5672
+    depends_on:
+      - rabbitmq
+      - postgres-medical-history
+    networks:
+      - microservices_network
+
+volumes:
+  pg_auth_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./auth_db/
+      o: bind
+  pg_patients_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./patients_db/
+      o: bind
+  pg_medical_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./medical_history_db/
+      o: bind
+  rabbitmq_data:
+
+networks:
+  microservices_network:
+    driver: bridge

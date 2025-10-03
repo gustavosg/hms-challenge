@@ -1,0 +1,15 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Shared.Infra.UnitOfWork;
+
+namespace Shared.Extensions;
+
+public static class UnitOfWorkExtensions
+{
+    public static IServiceCollection AddUnitOfWork<TContext>(this IServiceCollection services) 
+        where TContext : DbContext
+    {
+        services.AddScoped<IUnitOfWork<TContext>, UnitOfWork<TContext>>();
+        return services;
+    }
+}
